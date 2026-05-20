@@ -20,6 +20,12 @@ const TB3_P2_START   = TB3_P1_DAYS + TB3_REPOS_DAYS           // day drilling re
 // Stages (% of fit-out period): 0-12 bare concrete, 12-30 invert pour,
 // 30-45 drainage+slab, 45-60 road base, 60-75 pavement, 75-90 E&M systems,
 // 90-100 lighting+safety+commissioning.
+// Tunnel lining rings — official T2D figures (confirmed via t2d.sa.gov.au):
+//   55,000+ precast segments · 10 segments per ring · ~5,500 rings total
+//   Segments weigh ~12 t each, made at Waterloo Corner (up to 160/day at peak)
+const TOTAL_RINGS    = 5500
+const SEGS_PER_RING  = 10
+
 const SOUTH_BORE_DAYS   = Math.ceil(SOUTHERN_DIST / 9)                               // ~500 days
 const NORTH_BORE2_DAYS  = TB3_P2_START + Math.ceil(NORTHERN_DIST / 9)                // ~580 days
 const SOUTH_FITOUT_START = new Date(TUNNEL_START.getTime() + SOUTH_BORE_DAYS  * 86_400_000)
@@ -121,7 +127,7 @@ function computeState(date) {
     tbm1Asm : Math.min(100, asmF * 100 + 8),
     tbm2Asm : Math.min(100, asmF * 100),
     tbm3Asm : Math.min(100, t3F  * 100),
-    rings   : Math.floor(totalDist / 1.6),
+    rings   : Math.floor((totalDist / totalMax) * TOTAL_RINGS),
     plantPct: Math.min(100, 60 + (isTunnelling ? Math.min(40, daysDrilling * 0.05) : 0)),
     projPct : Math.round((totalDist / totalMax) * 100),
     southFitoutPct, northFitoutPct,
@@ -1336,7 +1342,7 @@ export default function App() {
           color="green" />
         <MetricCard icon={Layers} label="Rings Installed"
           value={state.rings.toLocaleString()}
-          sub={`of ~${Math.round(state.totalMax / 1.6).toLocaleString()} total`}
+          sub={`of ~${TOTAL_RINGS.toLocaleString()} · ${(state.rings * SEGS_PER_RING).toLocaleString()} segs`}
           color="blue" />
         <MetricCard icon={Construction} label="Spoil Sheds"
           value={String(shedCount)}
