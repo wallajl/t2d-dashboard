@@ -1403,6 +1403,11 @@ export default function App() {
         </div>
         <TBMPanels state={state} />
       </div>
+
+      {/* Footer */}
+      <div className="border-t border-slate-800 px-5 py-2 text-center shrink-0">
+        <span className="text-[10px] text-slate-600">Jaxon Wallace 2026</span>
+      </div>
     </div>
   )
 }
