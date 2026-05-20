@@ -681,6 +681,7 @@ function GeoSection({ state, W, H }) {
   })
 
   const p1  = useParticles(state.isTunnelling)
+  const p2  = useParticles(state.isTunnelling)
   const p3a = useParticles(isBoring3_1)
   const p3b = useParticles(isBoring3_2)
 
@@ -916,7 +917,7 @@ function GeoSection({ state, W, H }) {
         {/* TBM 2 — Southern lower (twin bore), faces LEFT toward Glandore */}
         <TBMUnit faceX={tb12FaceX} centreY={tubeY2} r={r} bodyLen={bL}
           spinning={state.isTunnelling} label="TBM 2" asm={state.tbm2Asm}
-          particles={[]} tunnelling={state.isTunnelling} />
+          particles={p2} tunnelling={state.isTunnelling} />
       </>}
 
       {/* TBM 3 — four phases: idle (assembly) → bore 1 → reposition → bore 2 → removed */}
@@ -1237,6 +1238,7 @@ function TimelineSlider({ value, onChange }) {
 // ── Root App ───────────────────────────────────────────────────────────────
 export default function App() {
   const [sliderVal, setSliderVal] = useState(DEFAULT_DATE.getTime())
+  const [hasDragged, setHasDragged] = useState(false)
   const containerRef = useRef(null)
   const [dims, setDims] = useState({ w: 900, h: 400 })
 
@@ -1256,6 +1258,19 @@ export default function App() {
 
   const M = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
   const dateStr = `${M[sliderDate.getMonth()]} ${sliderDate.getFullYear()}`
+
+  // Dynamic spoil shed count — mirrors the visibility logic in GeoSection
+  const shedCount =
+    (state.hiltonShedFade > 0.02 ? 1 : 0) +
+    (state.clovelyFade    > 0.02 ? 1 : 0) +
+    ((state.tb3Phase === 'bore_2' || state.tb3Phase === 'repositioning' || state.tb3Phase === 'complete') && state.torrensFade > 0.02 ? 1 : 0)
+  const shedSub = shedCount === 0
+    ? 'All sites decommissioned'
+    : shedCount === 1
+    ? 'One active site → Gillman'
+    : shedCount === 2
+    ? 'Two active sites → Gillman'
+    : 'Three active sites → Gillman'
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -1324,8 +1339,8 @@ export default function App() {
           sub={`of ~${Math.round(state.totalMax / 1.6).toLocaleString()} total`}
           color="blue" />
         <MetricCard icon={Construction} label="Spoil Sheds"
-          value="2"
-          sub="Hilton + Clovelly Pk → Gillman" color="amber" />
+          value={String(shedCount)}
+          sub={shedSub} color="amber" />
         <MetricCard icon={TrendingUp} label="Project Completion"
           value={`${state.projPct}%`}
           sub="Target: Dec 2031" color="orange" />
@@ -1359,7 +1374,14 @@ export default function App() {
             <span>Dec 2031</span>
           </div>
         </div>
-        <TimelineSlider value={sliderVal} onChange={setSliderVal} />
+        {!hasDragged && (
+          <p className="text-center mb-1.5 animate-pulse">
+            <span className="text-[9px] text-cyan-600 tracking-widest font-semibold">
+              ← DRAG TO EXPLORE THE TIMELINE →
+            </span>
+          </p>
+        )}
+        <TimelineSlider value={sliderVal} onChange={v => { setSliderVal(v); setHasDragged(true) }} />
         <p className="mt-1.5 text-[9px] text-slate-700 text-center">
           {state.isTunnelling
             ? `Excavation day ${state.daysDrilling} — ~9 m/day per TBM — S: ${Math.round(state.southDist).toLocaleString()}m · N: ${Math.round(state.northDist).toLocaleString()}m — trucks to Gillman every 3–4 min`
